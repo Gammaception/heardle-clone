@@ -3,6 +3,7 @@
 
   const dispatch = createEventDispatcher();
 
+  /** @type {{ id: string, name: string, thumbnail: string | null }} */
   const { artist } = $props();
 
   let song = $state(null);
@@ -21,6 +22,7 @@
   const snippetDurations = [3, 5, 8, 12, 18, 30];
 
   onMount(() => {
+    console.log('Game component mounted, artist prop:', artist);
     loadRandomSong();
   });
 
@@ -28,8 +30,9 @@
     loading = true;
     error = null;
     
+    console.log('loadRandomSong called, artist.id:', artist?.id);
     try {
-      const response = await fetch(`/api/artist/songs?artistId=${artist.id}`);
+      const response = await fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`);
       if (!response.ok) throw new Error('Failed to load song');
       
       const data = await response.json();

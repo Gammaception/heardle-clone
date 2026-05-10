@@ -5,8 +5,8 @@
   let showGame = $state(false);
   let selectedArtist = $state(null);
 
-  function handleArtistSelect(artist) {
-    selectedArtist = artist;
+  function handleArtistSelect(event) {
+    selectedArtist = event.detail;
     showGame = true;
   }
 

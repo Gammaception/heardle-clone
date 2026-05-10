@@ -13,11 +13,17 @@ export async function GET({ url }) {
     const ytmusic = await getYTMusic();
     const artist = await ytmusic.getArtist(artistId);
     
+    console.log('getArtist returned:', JSON.stringify(artist, null, 2));
+    
+    /* Fallback: if artistId is missing from the response, use the original ID
+     * This can happen if the API returns unexpected structure */
+    const resolvedId = artist.artistId || artistId;
+    
     return json({
       artist: {
-        id: artist.artistId,
-        name: artist.name,
-        thumbnail: artist.thumbnails[0]?.url || null
+        id: resolvedId,
+        name: artist.name || 'Unknown Artist',
+        thumbnail: artist.thumbnails?.[0]?.url || null
       }
     });
   } catch (err) {

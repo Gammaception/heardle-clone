@@ -10,8 +10,10 @@ export async function GET({ url }) {
   }
 
   try {
+    console.log('getArtistSongs called with artistId:', artistId);
     const ytmusic = await getYTMusic();
     const songs = await ytmusic.getArtistSongs(artistId);
+    console.log('getArtistSongs returned', songs.length, 'songs');
     
     if (songs.length === 0) {
       return error(404, 'No songs found for this artist');
