@@ -28,7 +28,7 @@
   let currentSnippet = $state(0);
   let showHint = $state(false);
   let hintText = $state('');
-  let hintsEnabled = $state(true);
+  let hintsEnabled = $state(false);
   let randomStartEnabled = $state(false);
   let randomStartTime = $state(0);
 
@@ -334,7 +334,7 @@
     currentSnippet = 0;
     showHint = false;
     hintText = '';
-    hintsEnabled = true;
+    hintsEnabled = false;
     randomStartTime = 0;
     pauseSnippet();
     loadRandomSong();

@@ -9,6 +9,7 @@
   let loading = $state(false);
   let searching = $state(false);
   let useUrlMode = $state(false);
+  let searchTimeout = null;
 
   /**
    * Extract artist ID from a YouTube Music URL
@@ -38,7 +39,7 @@
     }
   }
 
-  async function search() {
+  async function performSearch() {
     if (query.length < 2) return;
     
     loading = true;
@@ -53,6 +54,12 @@
     } finally {
       loading = false;
     }
+  }
+
+  function search() {
+    // Debounce: wait 300ms after last keystroke before searching
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(performSearch, 300);
   }
 
   async function submitUrl() {
