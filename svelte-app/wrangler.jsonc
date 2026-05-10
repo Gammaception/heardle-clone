@@ -6,7 +6,8 @@
   // Set this to today's date
   "compatibility_date": "2026-05-08",
   "assets": {
-    "directory": ".svelte-kit/cloudflare"
+    "directory": ".svelte-kit/cloudflare",
+    "binding": "ASSETS"
   },
   "workers_dev": false,
   "route": {
