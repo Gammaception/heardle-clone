@@ -1,38 +1,11 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  // Top-level configuration
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "heardle-clone",
-  "main": "src/index.js",
-  // Set this to today's date
-  "compatibility_date": "2026-05-08",
+  "main": "./.svelte-kit/cloudflare/_worker.js", // Directs the server logic
+  "compatibility_date": "2026-05-10",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
-    "directory": "./.svelte-kit/cloudflare",
+    "directory": ".svelte-kit/cloudflare",
     "binding": "ASSETS"
-  },
-  "workers_dev": false,
-  "route": {
-    "pattern": "example.org/*",
-    "zone_name": "example.org",
-  },
-  "kv_namespaces": [
-    {
-      "binding": "<MY_NAMESPACE>",
-      "id": "<KV_ID>",
-    },
-  ],
-  "env": {
-    "staging": {
-      "name": "my-worker-staging",
-      "route": {
-        "pattern": "staging.example.org/*",
-        "zone_name": "example.org",
-      },
-      "kv_namespaces": [
-        {
-          "binding": "<MY_NAMESPACE>",
-          "id": "<STAGING_KV_ID>",
-        },
-      ],
-    },
-  },
+  }
 }
