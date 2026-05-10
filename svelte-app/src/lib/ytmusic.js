@@ -1,13 +1,19 @@
 import YTMusic from 'ytmusic-api';
 
+/** @type {YTMusic | null} */
+let cachedInstance = null;
+
 /**
- * Creates and initializes a YTMusic instance.
- * Must be called before using the API to fetch required cookies.
+ * Returns a cached YTMusic instance, initializing it only once.
+ * This avoids repeated HTTP calls to fetch cookies on every request.
  */
 async function getYTMusic() {
-  const ytmusic = new YTMusic();
-  await ytmusic.initialize();
-  return ytmusic;
+  if (!cachedInstance) {
+    const ytmusic = new YTMusic();
+    await ytmusic.initialize();
+    cachedInstance = ytmusic;
+  }
+  return cachedInstance;
 }
 
 export { getYTMusic };

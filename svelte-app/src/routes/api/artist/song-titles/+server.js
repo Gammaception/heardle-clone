@@ -10,17 +10,16 @@ export async function GET({ url }) {
   }
 
   try {
-    const ytmusic = await getYTMusic();
-    const songs = await ytmusic.getArtistSongs(artistId);
+    // Reuse the /songs endpoint since it now includes titles
+    // This avoids a second call to getArtistSongs()
+    const response = await fetch(`${url.origin}/api/artist/songs?artistId=${encodeURIComponent(artistId)}`);
+    const data = await response.json();
     
-    if (songs.length === 0) {
+    if (!data.song && !data.titles) {
       return error(404, 'No songs found for this artist');
     }
     
-    // Return all unique song titles for autocomplete
-    const titles = [...new Set(songs.map(s => s.name))];
-    
-    return json({ titles });
+    return json({ titles: data.titles });
   } catch (err) {
     // console.error('Error getting artist song titles:', err);
     error(500, 'Failed to get songs for artist');

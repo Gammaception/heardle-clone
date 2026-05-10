@@ -180,23 +180,16 @@
     loading = true;
     error = null;
     
-    // console.log('loadRandomSong called, artist.id:', artist?.id);
     try {
-      // Fetch song and all titles in parallel
-      const [songResponse, titlesResponse] = await Promise.all([
-        fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`),
-        fetch(`/api/artist/song-titles?artistId=${encodeURIComponent(artist?.id)}`)
-      ]);
+      // Single fetch: /songs now returns both song and titles
+      const songResponse = await fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`);
       
-      if (!songResponse.ok || !titlesResponse.ok) throw new Error('Failed to load song');
+      if (!songResponse.ok) throw new Error('Failed to load song');
       
-      const [songData, titlesData] = await Promise.all([
-        songResponse.json(),
-        titlesResponse.json()
-      ]);
+      const songData = await songResponse.json();
       
       song = songData.song;
-      allTitles = titlesData.titles;
+      allTitles = songData.titles;
       filteredSuggestions = [];
       selectedSuggestionIndex = 0;
       

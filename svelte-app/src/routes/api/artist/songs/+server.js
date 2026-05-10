@@ -10,10 +10,8 @@ export async function GET({ url }) {
   }
 
   try {
-    // console.log('getArtistSongs called with artistId:', artistId);
     const ytmusic = await getYTMusic();
     const songs = await ytmusic.getArtistSongs(artistId);
-    // console.log('getArtistSongs returned', songs.length, 'songs');
     
     if (songs.length === 0) {
       return error(404, 'No songs found for this artist');
@@ -23,16 +21,23 @@ export async function GET({ url }) {
     const randomIndex = Math.floor(Math.random() * songs.length);
     const selectedSong = songs[randomIndex];
     
-    return json({
-      song: {
-        videoId: selectedSong.videoId,
-        title: selectedSong.name,
-        artist: selectedSong.artist.name,
-        album: selectedSong.album?.name || null,
-        thumbnail: selectedSong.thumbnails[0]?.url || null,
-        duration: selectedSong.duration
-      }
-    });
+    // Return both the selected song and all unique titles in one response
+    const titles = [...new Set(songs.map(s => s.name))];
+    
+    return json(
+      {
+        song: {
+          videoId: selectedSong.videoId,
+          title: selectedSong.name,
+          artist: selectedSong.artist.name,
+          album: selectedSong.album?.name || null,
+          thumbnail: selectedSong.thumbnails[0]?.url || null,
+          duration: selectedSong.duration
+        },
+        titles
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
   } catch (err) {
     // console.error('Error getting artist songs:', err);
     error(500, 'Failed to get songs for artist');
