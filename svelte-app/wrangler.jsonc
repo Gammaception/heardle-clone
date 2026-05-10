@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // Top-level configuration
-  "name": "svelte-app",
+  "name": "heardle-clone",
   "main": "src/index.js",
   // Set this to today's date
   "compatibility_date": "2026-05-08",
