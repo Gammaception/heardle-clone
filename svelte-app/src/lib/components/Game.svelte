@@ -20,6 +20,7 @@
   let currentSnippet = $state(0);
   let showHint = $state(false);
   let hintText = $state('');
+  let hintsEnabled = $state(true);
 
   // Audio playback state
   /** @type {any | null} */
@@ -195,7 +196,7 @@
     currentSnippet = guesses.length;
 
     // Generate hint based on the song title
-    if (!gameWon) {
+    if (!gameWon && hintsEnabled) {
       hintText = generateHint();
       showHint = true;
       // Restart snippet with new duration after guess
@@ -248,8 +249,20 @@
     currentSnippet = 0;
     showHint = false;
     hintText = '';
+    hintsEnabled = true;
     pauseSnippet();
     loadRandomSong();
+  }
+
+  function toggleHints() {
+    hintsEnabled = !hintsEnabled;
+    if (!hintsEnabled) {
+      showHint = false;
+      hintText = '';
+    } else {
+      showHint = guesses.length > 0;
+      hintText = generateHint();
+    }
   }
 
   /** @param {number} index */
@@ -306,9 +319,19 @@
       {/if}
     </div>
 
-    {#if showHint && !gameWon}
+    {#if showHint && hintsEnabled && !gameWon}
       <div class="hint-box">
         <p class="hint-text">{hintText}</p>
+      </div>
+    {/if}
+
+    {#if song && !gameWon && !gameLost}
+      <div class="hints-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" checked={hintsEnabled} oninput={toggleHints} />
+          <span class="toggle-slider"></span>
+          {hintsEnabled ? 'Hints ON' : 'Hints OFF'}
+        </label>
       </div>
     {/if}
 
@@ -662,5 +685,54 @@
   .play-btn.disabled, .restart-btn.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Hints Toggle */
+  .hints-toggle {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    user-select: none;
+  }
+
+  .toggle-label input[type="checkbox"] {
+    display: none;
+  }
+
+  .toggle-slider {
+    width: 40px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+
+  .toggle-label input:checked + .toggle-slider {
+    background: #f7971e;
+  }
+
+  .toggle-label input:checked + .toggle-slider::after {
+    transform: translateX(20px);
   }
 </style>
