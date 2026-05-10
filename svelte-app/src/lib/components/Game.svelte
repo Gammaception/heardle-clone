@@ -183,29 +183,38 @@
     loading = true;
     error = null;
     
-    try {
-      // Single fetch: /songs now returns both song and titles
-      const songResponse = await fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`);
-      
-      if (!songResponse.ok) throw new Error('Failed to load song');
-      
-      const songData = await songResponse.json();
-      
-      song = songData.song;
-      allTitles = songData.titles;
-      filteredSuggestions = [];
-      selectedSuggestionIndex = 0;
-      
-      // Initialize player after song loads
-      setTimeout(() => {
-        if (song) {
-          initializePlayer(song.videoId);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        // Single fetch: /songs now returns both song and titles
+        const songResponse = await fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`);
+        
+        if (!songResponse.ok) throw new Error('Failed to load song');
+        
+        const songData = await songResponse.json();
+        
+        song = songData.song;
+        allTitles = songData.titles;
+        filteredSuggestions = [];
+        selectedSuggestionIndex = 0;
+        
+        // Initialize player after song loads
+        setTimeout(() => {
+          if (song) {
+            initializePlayer(song.videoId);
+          }
+        }, 300);
+        
+        // Success - break out of retry loop
+        break;
+      } catch (err) {
+        error = (err instanceof Error) ? err.message : 'Unknown error';
+        // If this was the first attempt, clear error and try again
+        if (attempt === 1) {
+          error = null;
         }
-      }, 300);
-    } catch (err) {
-      error = (err instanceof Error) ? err.message : 'Unknown error';
-    } finally {
-      loading = false;
+      } finally {
+        loading = false;
+      }
     }
   }
 
