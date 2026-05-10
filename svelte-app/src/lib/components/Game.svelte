@@ -46,7 +46,7 @@
   let playerElement = null;
 
   // Snippet durations in seconds - each guess reveals more
-  const snippetDurations = [3, 5, 8, 12, 18, 30];
+  const snippetDurations = [1, 3, 5, 9, 16, 20];
 
   function loadYouTubeAPI() {
     return new Promise((/** @type {(value?: any) => void} */ resolve) => {
@@ -128,7 +128,7 @@
     if (!player || gameWon || gameLost) return;
 
     // Use first snippet duration (3s) before any guesses, then progressive durations after each guess
-    const duration = currentSnippet === 0 ? snippetDurations[0] : snippetDurations[currentSnippet - 1];
+    const duration = snippetDurations[Math.min(currentSnippet, snippetDurations.length - 1)];
 
     // Seek to start position (0 or random start time)
     player.seekTo(randomStartTime);
@@ -418,7 +418,7 @@
           </div>
         {/each}
       </div>
-      <p class="snippet-label">Snippet: {currentSnippet === 0 ? snippetDurations[0] : snippetDurations[currentSnippet - 1]}s playing</p>
+      <p class="snippet-label">Snippet: {snippetDurations[Math.min(currentSnippet, snippetDurations.length - 1)]}s playing</p>
       
       <!-- YouTube Player (hidden) -->
       <div bind:this={playerElement} class="yt-player-container"></div>
