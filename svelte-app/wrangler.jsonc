@@ -1,8 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "heardle-clone",
-  "main": ".svelte-kit/cloudflare/_worker.js",
+  "main": "./.svelte-kit/cloudflare/_worker.js", // Directs the server logic
   "compatibility_date": "2026-05-10",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".svelte-kit/cloudflare",
     "binding": "ASSETS",
