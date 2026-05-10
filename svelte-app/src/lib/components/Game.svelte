@@ -29,6 +29,8 @@
   let showHint = $state(false);
   let hintText = $state('');
   let hintsEnabled = $state(true);
+  let randomStartEnabled = $state(false);
+  let randomStartTime = $state(0);
 
   // Audio playback state
   /** @type {any | null} */
@@ -109,6 +111,14 @@
       events: {
         onReady: (/** @type {any} */ event) => {
           event.target.setVolume(80);
+          // Get actual duration from YouTube player and generate random start time
+          const duration = event.target.getDuration();
+          if (randomStartEnabled && duration > 25) {
+            const maxStart = duration - 15;
+            randomStartTime = Math.floor(Math.random() * maxStart);
+          } else {
+            randomStartTime = 0;
+          }
         }
       }
     });
@@ -120,6 +130,9 @@
     // Use first snippet duration (3s) before any guesses, then progressive durations after each guess
     const duration = currentSnippet === 0 ? snippetDurations[0] : snippetDurations[currentSnippet - 1];
 
+    // Seek to start position (0 or random start time)
+    player.seekTo(randomStartTime);
+    
     // Start playing
     player.playVideo();
     isPlaying = true;
@@ -159,7 +172,7 @@
     if (!player || gameWon || gameLost) return;
     
     pauseSnippet();
-    player.seekTo(0);
+    player.seekTo(randomStartTime);
     playSnippet();
   }
 
@@ -189,7 +202,9 @@
       
       // Initialize player after song loads
       setTimeout(() => {
-        if (song) initializePlayer(song.videoId);
+        if (song) {
+          initializePlayer(song.videoId);
+        }
       }, 300);
     } catch (err) {
       error = (err instanceof Error) ? err.message : 'Unknown error';
@@ -320,6 +335,7 @@
     showHint = false;
     hintText = '';
     hintsEnabled = true;
+    randomStartTime = 0;
     pauseSnippet();
     loadRandomSong();
   }
@@ -332,6 +348,36 @@
     } else {
       showHint = guesses.length > 0;
       hintText = generateHint();
+    }
+  }
+
+  function toggleRandomStart() {
+    randomStartEnabled = !randomStartEnabled;
+    if (!randomStartEnabled) {
+      randomStartTime = 0;
+      // If player is running, restart from beginning
+      if (player && !gameWon && !gameLost) {
+        pauseSnippet();
+        player.seekTo(0);
+        playSnippet();
+      }
+    } else {
+      // Generate random start time for current song using YouTube player
+      if (player) {
+        const duration = player.getDuration();
+        if (duration > 25) {
+          const maxStart = duration - 15;
+          randomStartTime = Math.floor(Math.random() * maxStart);
+        } else {
+          randomStartTime = 0;
+        }
+        // Restart from new position
+        if (!gameWon && !gameLost) {
+          pauseSnippet();
+          player.seekTo(randomStartTime);
+          playSnippet();
+        }
+      }
     }
   }
 
@@ -397,11 +443,18 @@
 
     {#if song && !gameWon && !gameLost}
       <div class="hints-toggle">
-        <label class="toggle-label">
-          <input type="checkbox" checked={hintsEnabled} oninput={toggleHints} />
-          <span class="toggle-slider"></span>
-          {hintsEnabled ? 'Hints ON' : 'Hints OFF'}
-        </label>
+        <div class="toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" checked={hintsEnabled} oninput={toggleHints} />
+            <span class="toggle-slider"></span>
+            {hintsEnabled ? 'Hints ON' : 'Hints OFF'}
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" checked={randomStartEnabled} oninput={toggleRandomStart} />
+            <span class="toggle-slider"></span>
+            {randomStartEnabled ? 'Random Start' : 'Start from Beginning'}
+          </label>
+        </div>
       </div>
     {/if}
 
@@ -816,6 +869,13 @@
   .hints-toggle {
     text-align: center;
     margin-bottom: 1rem;
+  }
+
+  .toggle-group {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
   }
 
   .toggle-label {
