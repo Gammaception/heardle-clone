@@ -637,6 +637,7 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
+    position: relative;
   }
 
   .guess-input {
@@ -662,6 +663,43 @@
     color: #000;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  /* Autocomplete Dropdown */
+  .autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: #1e1e2e;
+    border: 2px solid rgba(247, 151, 30, 0.4);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .suggestion-item {
+    display: block;
+    width: 100%;;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: #fff;
+    text-align: left;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .suggestion-item:hover {
+    background: rgba(247, 151, 30, 0.15);
+  }
+
+  .suggestion-item.selected {
+    background: rgba(247, 151, 30, 0.25);
+    color: #ffd200;
   }
 
   .guesses-history {
