@@ -1,14 +1,17 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 
   const dispatch = createEventDispatcher();
 
   /** @type {{ id: string, name: string, thumbnail: string | null }} */
   const { artist } = $props();
 
+  /** @type {{ videoId: string, title: string, artist: string, album: string | null, thumbnail: string | null, duration: number } | null} */
   let song = $state(null);
   let loading = $state(true);
+  /** @type {string | null} */
   let error = $state(null);
+  /** @type {{ title: string, correct: boolean }[]} */
   let guesses = $state([]);
   let currentGuess = $state('');
   let maxGuesses = 6;
@@ -18,13 +21,139 @@
   let showHint = $state(false);
   let hintText = $state('');
 
+  // Audio playback state
+  /** @type {any | null} */
+  let player = $state(null);
+  let isPlaying = $state(false);
+  let elapsedSeconds = $state(0);
+  /** @type {number | null} */
+  let snippetTimeout = null;
+  /** @type {number | null} */
+  let timerInterval = null;
+  let apiReady = false;
+  /** @type {HTMLDivElement | null} */
+  let playerElement = null;
+
   // Snippet durations in seconds - each guess reveals more
   const snippetDurations = [3, 5, 8, 12, 18, 30];
 
-  onMount(() => {
+  function loadYouTubeAPI() {
+    return new Promise((/** @type {(value?: any) => void} */ resolve) => {
+      /** @type {any} */
+      const win = /** @type {any} */ (window);
+      if (win.YT) {
+        resolve();
+        return;
+      }
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      win.onYouTubeIframeAPIReady = () => {
+        apiReady = true;
+        resolve();
+      };
+    });
+  }
+
+  onMount(async () => {
     console.log('Game component mounted, artist prop:', artist);
+    await loadYouTubeAPI();
     loadRandomSong();
   });
+
+  onDestroy(() => {
+    if (snippetTimeout) clearTimeout(snippetTimeout);
+    if (timerInterval) clearInterval(timerInterval);
+    if (player) {
+      try { player.destroy(); } catch (e) {}
+    }
+  });
+
+  /** @param {string} videoId */
+  function initializePlayer(videoId) {
+    if (!playerElement) return;
+    
+    // Destroy existing player if any
+    if (player) {
+      try { player.destroy(); } catch (e) {}
+      player = null;
+    }
+
+    if (snippetTimeout) clearTimeout(snippetTimeout);
+    if (timerInterval) clearInterval(timerInterval);
+    isPlaying = false;
+    elapsedSeconds = 0;
+
+    /** @type {any} */
+    const win = /** @type {any} */ (window);
+    player = new win.YT.Player(playerElement, {
+      height: '240',
+      width: '320',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0
+      },
+      events: {
+        onReady: (/** @type {any} */ event) => {
+          event.target.setVolume(80);
+        }
+      }
+    });
+  }
+
+  function playSnippet() {
+    if (!player || gameWon || gameLost) return;
+
+    const duration = currentSnippet > 0 ? snippetDurations[currentSnippet - 1] : 0;
+    
+    // Start playing
+    player.playVideo();
+    isPlaying = true;
+    elapsedSeconds = 0;
+
+    // Update elapsed time every second
+    timerInterval = setInterval(() => {
+      if (isPlaying) {
+        elapsedSeconds++;
+      }
+    }, 1000);
+
+    // Auto-pause after snippet duration
+    if (duration > 0) {
+      snippetTimeout = setTimeout(() => {
+        pauseSnippet();
+      }, duration * 1000);
+    }
+  }
+
+  function pauseSnippet() {
+    if (!player) return;
+    
+    player.pauseVideo();
+    isPlaying = false;
+    if (snippetTimeout) clearTimeout(snippetTimeout);
+    if (timerInterval) clearInterval(timerInterval);
+  }
+
+  function togglePlay() {
+    if (isPlaying) {
+      pauseSnippet();
+    } else {
+      playSnippet();
+    }
+  }
+
+  function restartSnippet() {
+    if (!player || gameWon || gameLost) return;
+    
+    pauseSnippet();
+    player.seekTo(0);
+    playSnippet();
+  }
 
   async function loadRandomSong() {
     loading = true;
@@ -37,8 +166,12 @@
       
       const data = await response.json();
       song = data.song;
+      // Initialize player after song loads
+      setTimeout(() => {
+        if (song) initializePlayer(song.videoId);
+      }, 300);
     } catch (err) {
-      error = err.message || 'Unknown error';
+      error = (err instanceof Error) ? err.message : 'Unknown error';
     } finally {
       loading = false;
     }
@@ -53,9 +186,10 @@
     };
 
     // Check if guess is correct (case insensitive partial match)
-    if (song.title.toLowerCase().includes(guessData.title)) {
+    if (song && song.title.toLowerCase().includes(guessData.title)) {
       gameWon = true;
       guessData.correct = true;
+      pauseSnippet();
     }
 
     guesses.push(guessData);
@@ -65,16 +199,20 @@
     if (!gameWon) {
       hintText = generateHint();
       showHint = true;
+      // Restart snippet with new duration after guess
+      restartSnippet();
     }
 
     // Check if game is lost
     if (guesses.length >= maxGuesses && !gameWon) {
       gameLost = true;
+      pauseSnippet();
     }
 
     currentGuess = '';
   }
 
+  /** @returns {string} */
   function generateHint() {
     if (!song) return '';
     
@@ -91,6 +229,7 @@
     return hint;
   }
 
+  /** @param {KeyboardEvent} e */
   function handleGuessKeydown(e) {
     if (e.key === 'Enter') {
       makeGuess();
@@ -110,9 +249,11 @@
     currentSnippet = 0;
     showHint = false;
     hintText = '';
+    pauseSnippet();
     loadRandomSong();
   }
 
+  /** @param {number} index */
   function getGuessStatus(index) {
     if (index < guesses.length) {
       return guesses[index].correct ? 'correct' : 'wrong';
@@ -150,6 +291,20 @@
         {/each}
       </div>
       <p class="snippet-label">Snippet: {currentSnippet > 0 ? snippetDurations[currentSnippet - 1] : 0}s playing</p>
+      
+      <!-- YouTube Player (hidden) -->
+      <div bind:this={playerElement} class="yt-player-container"></div>
+      
+      {#if song && !gameWon && !gameLost}
+        <div class="playback-controls">
+          <button onclick={togglePlay} class="play-btn" disabled={!player}>
+            {isPlaying ? '⏸ Pause' : '▶ Play'}
+          </button>
+          <button onclick={restartSnippet} class="restart-btn" disabled={!player}>
+            ↻ Restart
+          </button>
+        </div>
+      {/if}
     </div>
 
     {#if showHint && !gameWon}
@@ -465,5 +620,48 @@
   .new-artist-btn {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
+  }
+
+  /* YouTube Player - hidden but functional */
+  .yt-player-container {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    visibility: hidden;
+  }
+
+  /* Playback Controls */
+  .playback-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .play-btn, .restart-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .play-btn {
+    background: linear-gradient(to right, #f7971e, #ffd200);
+    color: #000;
+    font-weight: 600;
+  }
+
+  .restart-btn {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+
+  .play-btn.disabled, .restart-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>
