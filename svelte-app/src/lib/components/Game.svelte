@@ -108,8 +108,9 @@
   function playSnippet() {
     if (!player || gameWon || gameLost) return;
 
-    const duration = currentSnippet > 0 ? snippetDurations[currentSnippet - 1] : 0;
-    
+    // Use first snippet duration (3s) before any guesses, then progressive durations after each guess
+    const duration = currentSnippet === 0 ? snippetDurations[0] : snippetDurations[currentSnippet - 1];
+
     // Start playing
     player.playVideo();
     isPlaying = true;
@@ -123,11 +124,9 @@
     }, 1000);
 
     // Auto-pause after snippet duration
-    if (duration > 0) {
-      snippetTimeout = setTimeout(() => {
-        pauseSnippet();
-      }, duration * 1000);
-    }
+    snippetTimeout = setTimeout(() => {
+      pauseSnippet();
+    }, duration * 1000);
   }
 
   function pauseSnippet() {
@@ -290,17 +289,17 @@
           </div>
         {/each}
       </div>
-      <p class="snippet-label">Snippet: {currentSnippet > 0 ? snippetDurations[currentSnippet - 1] : 0}s playing</p>
+      <p class="snippet-label">Snippet: {currentSnippet === 0 ? snippetDurations[0] : snippetDurations[currentSnippet - 1]}s playing</p>
       
       <!-- YouTube Player (hidden) -->
       <div bind:this={playerElement} class="yt-player-container"></div>
       
       {#if song && !gameWon && !gameLost}
         <div class="playback-controls">
-          <button onclick={togglePlay} class="play-btn" disabled={!player}>
+          <button onclick={togglePlay} class="play-btn" class:disabled={!player} disabled={!player}>
             {isPlaying ? '⏸ Pause' : '▶ Play'}
           </button>
-          <button onclick={restartSnippet} class="restart-btn" disabled={!player}>
+          <button onclick={restartSnippet} class="restart-btn" class:disabled={!player} disabled={!player}>
             ↻ Restart
           </button>
         </div>
