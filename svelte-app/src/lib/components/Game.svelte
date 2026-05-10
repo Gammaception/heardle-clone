@@ -454,13 +454,13 @@
     {#if gameWon}
       <div class="result-box win">
         <h3 class="result-title">🎉 Correct!</h3>
-        <p class="song-reveal">The song is "{song.title}"{#if song.album} from {song.album}{/if}</p>
+        <p class="song-reveal">The song is "<a href={"https://music.youtube.com/watch?v=" + song.videoId} target="_blank" rel="noopener noreferrer" class="song-link">{song.title}</a>"{#if song.album} from {song.album}{/if}</p>
         <p class="guesses-count">You guessed it in {guesses.length} {guesses.length === 1 ? 'try' : 'tries'}!</p>
       </div>
     {:else if gameLost}
       <div class="result-box lose">
         <h3 class="result-title">😔 Better luck next time!</h3>
-        <p class="song-reveal">The song was "{song.title}"{#if song.album} from {song.album}{/if}</p>
+        <p class="song-reveal">The song was "<a href={"https://music.youtube.com/watch?v=" + song.videoId} target="_blank" rel="noopener noreferrer" class="song-link">{song.title}</a>"{#if song.album} from {song.album}{/if}</p>
       </div>
     {:else}
       <div class="guess-input-box">
@@ -673,6 +673,16 @@
   .song-reveal {
     font-size: 1.1rem;
     margin-bottom: 0.5rem;
+  }
+
+  .song-link {
+    color: #ffd200;
+    text-decoration: underline;
+    transition: color 0.2s;
+  }
+
+  .song-link:hover {
+    color: #f7971e;
   }
 
   .guesses-count {
