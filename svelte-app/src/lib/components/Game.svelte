@@ -31,6 +31,7 @@
   let hintsEnabled = $state(false);
   let randomStartEnabled = $state(false);
   let randomStartTime = $state(0);
+  let savedRandomStartTime = $state(0);
 
   // Audio playback state
   /** @type {any | null} */
@@ -329,6 +330,7 @@
     hintText = '';
     hintsEnabled = false;
     randomStartTime = 0;
+    savedRandomStartTime = 0;
     pauseSnippet();
     loadRandomSong();
   }
@@ -347,6 +349,8 @@
   function toggleRandomStart() {
     randomStartEnabled = !randomStartEnabled;
     if (!randomStartEnabled) {
+      // Save current random position before disabling
+      savedRandomStartTime = randomStartTime;
       randomStartTime = 0;
       // If player is running, restart from beginning
       if (player && !gameWon && !gameLost) {
@@ -355,21 +359,24 @@
         playSnippet();
       }
     } else {
-      // Generate random start time for current song using YouTube player
-      if (player) {
+      // Restore the previously generated random start time (or generate new one if first time)
+      if (savedRandomStartTime > 0) {
+        randomStartTime = savedRandomStartTime;
+      } else if (player) {
         const duration = player.getDuration();
         if (duration > 25) {
           const maxStart = duration - 15;
           randomStartTime = Math.floor(Math.random() * maxStart);
+          savedRandomStartTime = randomStartTime;
         } else {
           randomStartTime = 0;
         }
-        // Restart from new position
-        if (!gameWon && !gameLost) {
-          pauseSnippet();
-          player.seekTo(randomStartTime);
-          playSnippet();
-        }
+      }
+      // Restart from position
+      if (player && !gameWon && !gameLost) {
+        pauseSnippet();
+        player.seekTo(randomStartTime);
+        playSnippet();
       }
     }
   }
