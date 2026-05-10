@@ -24,7 +24,7 @@ export async function GET({ url }) {
     
     return json({ results: artists });
   } catch (err) {
-    console.error('Error searching for artists:', err);
+    // console.error('Error searching for artists:', err);
     error(500, 'Failed to search for artists');
   }
 }

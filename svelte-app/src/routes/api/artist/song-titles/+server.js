@@ -22,7 +22,7 @@ export async function GET({ url }) {
     
     return json({ titles });
   } catch (err) {
-    console.error('Error getting artist song titles:', err);
+    // console.error('Error getting artist song titles:', err);
     error(500, 'Failed to get songs for artist');
   }
 }

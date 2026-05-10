@@ -67,7 +67,7 @@
   }
 
   onMount(async () => {
-    console.log('Game component mounted, artist prop:', artist);
+    // console.log('Game component mounted, artist prop:', artist);
     await loadYouTubeAPI();
     loadRandomSong();
   });
@@ -180,7 +180,7 @@
     loading = true;
     error = null;
     
-    console.log('loadRandomSong called, artist.id:', artist?.id);
+    // console.log('loadRandomSong called, artist.id:', artist?.id);
     try {
       // Fetch song and all titles in parallel
       const [songResponse, titlesResponse] = await Promise.all([

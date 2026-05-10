@@ -10,10 +10,10 @@ export async function GET({ url }) {
   }
 
   try {
-    console.log('getArtistSongs called with artistId:', artistId);
+    // console.log('getArtistSongs called with artistId:', artistId);
     const ytmusic = await getYTMusic();
     const songs = await ytmusic.getArtistSongs(artistId);
-    console.log('getArtistSongs returned', songs.length, 'songs');
+    // console.log('getArtistSongs returned', songs.length, 'songs');
     
     if (songs.length === 0) {
       return error(404, 'No songs found for this artist');
@@ -34,7 +34,7 @@ export async function GET({ url }) {
       }
     });
   } catch (err) {
-    console.error('Error getting artist songs:', err);
+    // console.error('Error getting artist songs:', err);
     error(500, 'Failed to get songs for artist');
   }
 }

@@ -49,7 +49,7 @@
       const data = await response.json();
       results = data.results;
     } catch (err) {
-      console.error('Search failed:', err);
+      // console.error('Search failed:', err);
     } finally {
       loading = false;
     }
@@ -75,7 +75,7 @@
       const data = await response.json();
       dispatch('artistSelected', data.artist);
     } catch (err) {
-      console.error('Failed to fetch artist:', err);
+      // console.error('Failed to fetch artist:', err);
       alert('Failed to fetch artist information.');
     } finally {
       loading = false;

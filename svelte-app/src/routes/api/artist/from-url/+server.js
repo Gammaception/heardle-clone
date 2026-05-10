@@ -13,7 +13,7 @@ export async function GET({ url }) {
     const ytmusic = await getYTMusic();
     const artist = await ytmusic.getArtist(artistId);
     
-    console.log('getArtist returned:', JSON.stringify(artist, null, 2));
+    // console.log('getArtist returned:', JSON.stringify(artist, null, 2));
     
     /* Fallback: if artistId is missing from the response, use the original ID
      * This can happen if the API returns unexpected structure */
@@ -27,7 +27,7 @@ export async function GET({ url }) {
       }
     });
   } catch (err) {
-    console.error('Error fetching artist:', err);
+    // console.error('Error fetching artist:', err);
     error(500, 'Failed to fetch artist information');
   }
 }
