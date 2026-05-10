@@ -1,10 +1,13 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // Top-level configuration
-  "name": "my-worker",
+  "name": "svelte-app",
   "main": "src/index.js",
   // Set this to today's date
   "compatibility_date": "2026-05-08",
+  "assets": {
+    "directory": ".svelte-kit/cloudflare"
+  },
   "workers_dev": false,
   "route": {
     "pattern": "example.org/*",
