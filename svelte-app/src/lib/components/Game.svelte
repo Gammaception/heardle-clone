@@ -38,6 +38,7 @@
   let player = $state(null);
   let isPlaying = $state(false);
   let elapsedSeconds = $state(0);
+  let songDuration = $state(0);
   /** @type {number | null} */
   let snippetTimeout = null;
   /** @type {number | null} */
@@ -112,8 +113,9 @@
       events: {
         onReady: (/** @type {any} */ event) => {
           event.target.setVolume(80);
-          // Get actual duration from YouTube player and generate random start time
+          // Get actual duration from YouTube player and store it
           const duration = event.target.getDuration();
+          songDuration = duration;
           if (randomStartEnabled && duration > 25) {
             const maxStart = duration - 15;
             randomStartTime = Math.floor(Math.random() * maxStart);
@@ -275,19 +277,43 @@
 
   /** @returns {string} */
   function generateHint() {
-    if (!song) return '';
+    if (!song || !songDuration) return '';
     
-    const title = song.title;
-    const revealedLetters = Math.min(3 + guesses.length, title.length);
-    const hintTitle = title.slice(0, revealedLetters) + '_'.repeat(Math.max(0, title.length - revealedLetters));
+    const guessCount = guesses.length;
+    const hints = [];
     
-    let hint = `Song starts with: "${hintTitle}"`;
-    
-    if (guesses.length >= 3) {
-      hint += ` | Album: ${song.album || 'Unknown'}`;
+    // Hint 1 (after 1st wrong guess): Duration from YouTube player - least helpful
+    if (guessCount >= 1) {
+      const mins = Math.floor(songDuration / 60);
+      const secs = Math.floor(songDuration % 60);
+      const durationStr = secs > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${mins}:00`;
+      hints.push(`Duration: ${durationStr}`);
     }
     
-    return hint;
+    // Hint 2 (after 2nd wrong guess): First letter of the song
+    if (guessCount >= 2) {
+      const firstLetter = song.title.charAt(0).toUpperCase();
+      hints.push(`Starts with: "${firstLetter}"`);
+    }
+    
+    // Hint 3 (after 3rd wrong guess): Album name
+    if (guessCount >= 3 && song.album) {
+      hints.push(`Album: ${song.album}`);
+    }
+    
+    // Hint 4 (after 4th wrong guess): Number of letters in title
+    if (guessCount >= 4) {
+      const letterCount = song.title.replace(/[^a-zA-Z0-9]/g, '').length;
+      hints.push(`${letterCount} letters`);
+    }
+    
+    // Hint 5 (after 5th wrong guess): First 3 letters
+    if (guessCount >= 5) {
+      const firstFew = song.title.slice(0, 3).toUpperCase();
+      hints.push(`Starts with: "${firstFew}"`);
+    }
+    
+    return hints.join(' | ');
   }
 
   /** @param {KeyboardEvent} e */
@@ -331,6 +357,7 @@
     hintsEnabled = false;
     randomStartTime = 0;
     savedRandomStartTime = 0;
+    songDuration = 0;
     pauseSnippet();
     loadRandomSong();
   }
