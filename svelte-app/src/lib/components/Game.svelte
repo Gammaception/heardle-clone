@@ -15,6 +15,14 @@
   let guesses = $state([]);
   let currentGuess = $state('');
   let maxGuesses = 6;
+
+  // Autocomplete state
+  /** @type {string[]} */
+  let allTitles = $state([]);
+  /** @type {string[]} */
+  let filteredSuggestions = $state([]);
+  let showDropdown = $state(false);
+  let selectedSuggestionIndex = $state(0);
   let gameWon = $state(false);
   let gameLost = $state(false);
   let currentSnippet = $state(0);
@@ -161,11 +169,24 @@
     
     console.log('loadRandomSong called, artist.id:', artist?.id);
     try {
-      const response = await fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`);
-      if (!response.ok) throw new Error('Failed to load song');
+      // Fetch song and all titles in parallel
+      const [songResponse, titlesResponse] = await Promise.all([
+        fetch(`/api/artist/songs?artistId=${encodeURIComponent(artist?.id)}`),
+        fetch(`/api/artist/song-titles?artistId=${encodeURIComponent(artist?.id)}`)
+      ]);
       
-      const data = await response.json();
-      song = data.song;
+      if (!songResponse.ok || !titlesResponse.ok) throw new Error('Failed to load song');
+      
+      const [songData, titlesData] = await Promise.all([
+        songResponse.json(),
+        titlesResponse.json()
+      ]);
+      
+      song = songData.song;
+      allTitles = titlesData.titles;
+      filteredSuggestions = [];
+      selectedSuggestionIndex = 0;
+      
       // Initialize player after song loads
       setTimeout(() => {
         if (song) initializePlayer(song.videoId);
@@ -177,16 +198,45 @@
     }
   }
 
+  function filterSuggestions() {
+    const query = currentGuess.trim().toLowerCase();
+    if (!query) {
+      filteredSuggestions = [];
+      showDropdown = false;
+      return;
+    }
+    
+    filteredSuggestions = allTitles.filter(title =>
+      title.toLowerCase().includes(query)
+    ).slice(0, 5);
+    
+    showDropdown = filteredSuggestions.length > 0;
+    selectedSuggestionIndex = 0;
+  }
+
+  function handleInput() {
+    filterSuggestions();
+  }
+
+  /** @param {number} index */
+  function selectSuggestion(index) {
+    if (index >= 0 && index < filteredSuggestions.length) {
+      currentGuess = filteredSuggestions[index];
+      showDropdown = false;
+    }
+  }
+
   function makeGuess() {
     if (!currentGuess.trim() || gameWon || gameLost) return;
 
+    const guessTitle = currentGuess.trim();
     const guessData = {
-      title: currentGuess.trim().toLowerCase(),
+      title: guessTitle.toLowerCase(),
       correct: false
     };
 
-    // Check if guess is correct (case insensitive partial match)
-    if (song && song.title.toLowerCase().includes(guessData.title)) {
+    // Check if guess is correct (exact case-insensitive match)
+    if (song && song.title.toLowerCase() === guessTitle.toLowerCase()) {
       gameWon = true;
       guessData.correct = true;
       pauseSnippet();
@@ -210,6 +260,8 @@
     }
 
     currentGuess = '';
+    showDropdown = false;
+    filteredSuggestions = [];
   }
 
   /** @returns {string} */
@@ -232,7 +284,25 @@
   /** @param {KeyboardEvent} e */
   function handleGuessKeydown(e) {
     if (e.key === 'Enter') {
-      makeGuess();
+      if (showDropdown && filteredSuggestions.length > 0) {
+        // Select the highlighted suggestion
+        selectSuggestion(selectedSuggestionIndex);
+        makeGuess();
+      } else {
+        makeGuess();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (showDropdown && filteredSuggestions.length > 0) {
+        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, filteredSuggestions.length - 1);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (showDropdown && filteredSuggestions.length > 0) {
+        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
+      }
+    } else if (e.key === 'Escape') {
+      showDropdown = false;
     }
   }
 
@@ -351,11 +421,28 @@
         <input
           type="text"
           bind:value={currentGuess}
+          oninput={handleInput}
           onkeydown={handleGuessKeydown}
-          placeholder="Enter song title..."
+          placeholder="Type song title..."
           class="guess-input"
+          autocomplete="off"
         />
         <button onclick={makeGuess} class="guess-btn">Guess</button>
+        
+        {#if showDropdown && filteredSuggestions.length > 0}
+          <div class="autocomplete-dropdown">
+            {#each filteredSuggestions as title, i (title)}
+              <button
+                type="button"
+                class="suggestion-item"
+                class:selected={i === selectedSuggestionIndex}
+                onclick={() => selectSuggestion(i)}
+              >
+                {title}
+              </button>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       {#if guesses.length > 0}
