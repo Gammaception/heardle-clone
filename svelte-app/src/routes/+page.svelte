@@ -24,7 +24,7 @@
 <div class="app">
   {#if !showGame}
     <div class="landing">
-      <h1 class="title">🎵 Heardle Clone</h1>
+      <h1 class="title">🎵 Ana's Heardle</h1>
       <p class="subtitle">Pick an artist and try to guess their song!</p>
       <ArtistSearch on:artistSelected={handleArtistSelect} />
     </div>
