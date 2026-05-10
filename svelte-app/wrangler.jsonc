@@ -8,5 +8,14 @@
     "directory": ".svelte-kit/cloudflare",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "observability": {
+  "logs": {
+    "enabled": true,
+    "invocation_logs": true
+  },
+  "traces": {
+    "enabled": true
+    }
   }
 }
