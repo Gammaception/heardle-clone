@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { addGameResult } from '$lib/gameHistory.js';
 
   const dispatch = createEventDispatcher();
 
@@ -277,6 +278,13 @@
     if (guesses.length >= maxGuesses && !gameWon) {
       gameLost = true;
       pauseSnippet();
+      // Save game result to history
+      saveGameResult(false);
+    }
+    
+    // Save game result when won
+    if (gameWon) {
+      saveGameResult(true);
     }
 
     currentGuess = '';
@@ -353,6 +361,19 @@
     } else if (e.key === 'Escape') {
       showDropdown = false;
     }
+  }
+
+  /** @param {boolean} won */
+  function saveGameResult(won) {
+    if (!song || !artist) return;
+    addGameResult({
+      artistId: artist.id,
+      artistName: artist.name,
+      songTitle: song.title,
+      won,
+      guesses: guesses.length,
+      timestamp: Date.now()
+    });
   }
 
   function newGame() {

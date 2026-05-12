@@ -1,18 +1,25 @@
 <script>
   import ArtistSearch from '$lib/components/ArtistSearch.svelte';
   import Game from '$lib/components/Game.svelte';
+  import StatsOverview from '$lib/components/StatsOverview.svelte';
 
   let showGame = $state(false);
   let selectedArtist = $state(null);
+  let showStats = $state(false);
 
   function handleArtistSelect(event) {
     selectedArtist = event.detail;
     showGame = true;
+    showStats = false;
   }
 
   function handleNewGame() {
     showGame = false;
     selectedArtist = null;
+  }
+
+  function toggleStats() {
+    showStats = !showStats;
   }
 </script>
 
@@ -22,6 +29,14 @@
 </svelte:head>
 
 <div class="app">
+  <button class="stats-toggle" onclick={toggleStats}>
+    {showStats ? 'Hide Stats' : 'Show Stats'}
+  </button>
+
+  {#if showStats}
+    <StatsOverview artist={selectedArtist} />
+  {/if}
+
   {#if !showGame}
     <div class="landing">
       <h1 class="title">🎵 Ana's Heardle</h1>
@@ -54,6 +69,23 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+  }
+
+  .stats-toggle {
+    align-self: flex-end;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    transition: background 0.2s;
+  }
+
+  .stats-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .landing {
