@@ -21,6 +21,17 @@ export async function GET({ url }) {
     const randomIndex = Math.floor(Math.random() * songs.length);
     const selectedSong = songs[randomIndex];
     
+    // Get release year from album if available
+    let year = null;
+    if (selectedSong.album?.albumId) {
+      try {
+        const albumData = /** @type {any} */ (await ytmusic.getAlbum(selectedSong.album.albumId));
+        year = albumData.year || null;
+      } catch {
+        // Album fetch failed, year will remain null
+      }
+    }
+    
     // Return both the selected song and all unique titles in one response
     const titles = [...new Set(songs.map(s => s.name))];
     
@@ -32,7 +43,8 @@ export async function GET({ url }) {
           artist: selectedSong.artist.name,
           album: selectedSong.album?.name || null,
           thumbnail: selectedSong.thumbnails[0]?.url || null,
-          duration: selectedSong.duration
+          duration: selectedSong.duration,
+          year
         },
         titles
       },

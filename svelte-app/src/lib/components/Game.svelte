@@ -6,7 +6,7 @@
   /** @type {{ id: string, name: string, thumbnail: string | null }} */
   const { artist } = $props();
 
-  /** @type {{ videoId: string, title: string, artist: string, album: string | null, thumbnail: string | null, duration: number } | null} */
+  /** @type {{ videoId: string, title: string, artist: string, album: string | null, thumbnail: string | null, duration: number, year: number | null } | null} */
   let song = $state(null);
   let loading = $state(true);
   /** @type {string | null} */
@@ -298,29 +298,34 @@
       const durationStr = secs > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${mins}:00`;
       hints.push(`Duration: ${durationStr}`);
     }
-    
-    // Hint 2 (after 2nd wrong guess): First letter of the song
-    if (guessCount >= 2) {
-      const firstLetter = song.title.charAt(0).toUpperCase();
-      hints.push(`Starts with: "${firstLetter}"`);
+
+    // Hint 2 (after 2rd wrong guess): Release year
+    if (guessCount >= 2 && song.year) {
+      hints.push(`Released: ${song.year}`);
     }
-    
+
     // Hint 3 (after 3rd wrong guess): Album name
     if (guessCount >= 3 && song.album) {
       hints.push(`Album: ${song.album}`);
     }
-    
+
     // Hint 4 (after 4th wrong guess): Number of letters in title
     if (guessCount >= 4) {
       const letterCount = song.title.replace(/[^a-zA-Z0-9]/g, '').length;
       hints.push(`${letterCount} letters`);
     }
-    
-    // Hint 5 (after 5th wrong guess): First 3 letters
+      
+    // Hint 5 (after 5th wrong guess): First letter of the song
     if (guessCount >= 5) {
-      const firstFew = song.title.slice(0, 3).toUpperCase();
-      hints.push(`Starts with: "${firstFew}"`);
+      const firstLetter = song.title.charAt(0).toUpperCase();
+      hints.push(`Starts with: "${firstLetter}"`);
     }
+    
+    // Hint 6 (after 6th wrong guess): First 3 letters
+    //if (guessCount >= 6) {
+    //  const firstFew = song.title.slice(0, 3).toUpperCase();
+    //  hints.push(`Starts with: "${firstFew}"`);
+    //}
     
     return hints.join(' | ');
   }
