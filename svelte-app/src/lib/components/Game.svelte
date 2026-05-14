@@ -5,7 +5,7 @@
   const dispatch = createEventDispatcher();
 
   /** @type {{ id: string, name: string, thumbnail: string | null }} */
-  const { artist, dailyMode = false } = $props();
+  const { artist, dailyMode = false, dailyDate = null } = $props();
 
   /** @type {{ videoId: string, title: string, artist: string, album: string | null, thumbnail: string | null, duration: number, year: number | null } | null} */
   let song = $state(null);
@@ -372,7 +372,8 @@
       songTitle: song.title,
       won,
       guesses: guesses.length,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...(dailyDate ? { date: dailyDate } : {})
     });
   }
 

@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { getGameResultByDate } from '$lib/gameHistory.js';
 
   const dispatch = createEventDispatcher();
 
@@ -53,6 +54,17 @@
    */
   function getDateStr(day, month, year) {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  /**
+   * Get the game result status for a given date
+   * @param {string} dateStr
+   * @returns {'won' | 'lost' | 'none'}
+   */
+  function getGameStatus(dateStr) {
+    const result = getGameResultByDate(dateStr);
+    if (!result) return 'none';
+    return result.won ? 'won' : 'lost';
   }
 
   /**
@@ -191,9 +203,11 @@
                   class="day available"
                   class:today={isToday(day, currentMonth, currentYear)}
                   class:selected={selectedDate === getDateStr(day, currentMonth, currentYear)}
+                  class:won={getGameStatus(getDateStr(day, currentMonth, currentYear)) === 'won'}
+                  class:lost={getGameStatus(getDateStr(day, currentMonth, currentYear)) === 'lost'}
                   onclick={() => selectDate(day)}
                 >
-                  {day}
+                  {day}{getGameStatus(getDateStr(day, currentMonth, currentYear)) === 'won' ? '✓' : getGameStatus(getDateStr(day, currentMonth, currentYear)) === 'lost' ? '✗' : ''}
                 </button>
               {:else}
                 <div class="day unavailable">{day}</div>
@@ -328,6 +342,18 @@
 .day.unavailable {
   color: rgba(255, 255, 255, 0.2);
   cursor: default;
+}
+
+.day.won {
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  color: #fff;
+  font-weight: 700;
+}
+
+.day.lost {
+  background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+  color: #fff;
+  font-weight: 700;
 }
 
 .loading {

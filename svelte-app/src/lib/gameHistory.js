@@ -9,6 +9,7 @@ const COOKIE_DAYS = 365;
  * @property {boolean} won
  * @property {number} guesses
  * @property {number} timestamp
+ * @property {string} [date] - Optional date string (YYYY-MM-DD) for daily games
  */
 
 /**
@@ -83,8 +84,28 @@ export function saveHistory(history) {
  */
 export function addGameResult(result) {
   const history = loadHistory();
-  history.push(result);
+  // Update existing result for the same date if it exists (for daily games)
+  if (result.date) {
+    const existingIndex = history.findIndex(g => g.date === result.date);
+    if (existingIndex !== -1) {
+      history[existingIndex] = result;
+    } else {
+      history.push(result);
+    }
+  } else {
+    history.push(result);
+  }
   saveHistory(history);
+}
+
+/**
+ * Get game result for a specific date (for daily games)
+ * @param {string} date - Date string in YYYY-MM-DD format
+ * @returns {GameResult | undefined}
+ */
+export function getGameResultByDate(date) {
+  const history = loadHistory();
+  return history.find(g => g.date === date);
 }
 
 /**

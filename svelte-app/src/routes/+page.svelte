@@ -11,6 +11,8 @@
   let dailyLoading = $state(false);
   /** @type {string | null} */
   let dailyError = $state(null);
+  /** @type {string | null} */
+  let dailyDate = $state(null);
   let showCalendar = $state(false);
 
   /** @param {any} event */
@@ -24,6 +26,7 @@
   /** @param {any} event */
   function handleDailySelected(event) {
     selectedArtist = event.detail.artist;
+    dailyDate = event.detail.date;
     dailyMode = true;
     showGame = true;
     showStats = false;
@@ -40,6 +43,7 @@
       }
       const data = await response.json();
       selectedArtist = data.artist;
+      dailyDate = data.date;
       dailyMode = true;
       showGame = true;
       showStats = false;
@@ -54,6 +58,7 @@
     showGame = false;
     selectedArtist = null;
     dailyMode = false;
+    dailyDate = null;
     showCalendar = false;
   }
 
@@ -115,7 +120,7 @@
       {/if}
     </div>
   {:else}
-    <Game artist={selectedArtist} dailyMode={dailyMode} on:newGame={handleNewGame} />
+    <Game artist={selectedArtist} dailyMode={dailyMode} dailyDate={dailyDate} on:newGame={handleNewGame} />
   {/if}
 </div>
 
