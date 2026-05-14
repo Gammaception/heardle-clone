@@ -71,8 +71,17 @@ async function findArtistOnYTMusic(ytmusic, artistName) {
 }
 
 /** @type {import('./$types').RequestHandler} */
-export async function GET() {
+export async function GET({ url }) {
   try {
+    // Get optional date parameter (defaults to today)
+    const dateParam = url.searchParams.get('date');
+    const targetDate = dateParam || getTodayDate();
+    
+    // Validate date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      return error(400, 'Invalid date format. Use YYYY-MM-DD');
+    }
+
     // Step 1: Get artists from Billboard Hot 100
     console.log('Fetching Billboard Hot 100...');
     const allArtists = await getBillboardArtists();
@@ -96,19 +105,18 @@ export async function GET() {
 
     console.log('Extracted', uniqueArtists.length, 'unique artists from Billboard');
 
-    // Step 3: Use today's date as a seed for consistent daily selection
-    const today = getTodayDate();
+    // Step 3: Use target date as a seed for consistent daily selection
     let hash = 0;
-    for (let i = 0; i < today.length; i++) {
-      const char = today.charCodeAt(i);
+    for (let i = 0; i < targetDate.length; i++) {
+      const char = targetDate.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32bit integer
     }
 
-    // Pick a consistent artist name from Billboard for today
+    // Pick a consistent artist name from Billboard for the target date
     const selectedIndex = Math.abs(hash) % uniqueArtists.length;
     const selectedArtistName = uniqueArtists[selectedIndex];
-    console.log('Selected artist for', today, ':', selectedArtistName);
+    console.log('Selected artist for', targetDate, ':', selectedArtistName);
 
     // Step 4: Search for the selected artist on YouTube Music
     const ytmusic = await getYTMusic();
@@ -124,7 +132,7 @@ export async function GET() {
 
     return json(
       {
-        date: today,
+        date: targetDate,
         billboardArtist: selectedArtistName,
         artist: ytArtist
       },

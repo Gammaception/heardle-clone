@@ -2,6 +2,7 @@
   import ArtistSearch from '$lib/components/ArtistSearch.svelte';
   import Game from '$lib/components/Game.svelte';
   import StatsOverview from '$lib/components/StatsOverview.svelte';
+  import DailyCalendar from '$lib/components/DailyCalendar.svelte';
 
   let showGame = $state(false);
   let selectedArtist = $state(null);
@@ -10,6 +11,7 @@
   let dailyLoading = $state(false);
   /** @type {string | null} */
   let dailyError = $state(null);
+  let showCalendar = $state(false);
 
   /** @param {any} event */
   function handleArtistSelect(event) {
@@ -17,6 +19,15 @@
     dailyMode = false;
     showGame = true;
     showStats = false;
+  }
+
+  /** @param {any} event */
+  function handleDailySelected(event) {
+    selectedArtist = event.detail.artist;
+    dailyMode = true;
+    showGame = true;
+    showStats = false;
+    showCalendar = false;
   }
 
   async function playDaily() {
@@ -43,10 +54,15 @@
     showGame = false;
     selectedArtist = null;
     dailyMode = false;
+    showCalendar = false;
   }
 
   function toggleStats() {
     showStats = !showStats;
+  }
+
+  function toggleCalendar() {
+    showCalendar = !showCalendar;
   }
 </script>
 
@@ -68,24 +84,35 @@
     <div class="landing">
       <h1 class="title">🎵 Ana's Heardle</h1>
       <p class="subtitle">Pick an artist and try to guess their song!</p>
-      
-      <button class="daily-btn" onclick={playDaily} disabled={dailyLoading}>
-        {#if dailyLoading}
-          Loading...
-        {:else}
-          📅 Daily Heardle
+
+      {#if showCalendar}
+        <DailyCalendar on:dailySelected={handleDailySelected} />
+        <button class="back-btn" onclick={toggleCalendar}>
+          ← Back
+        </button>
+      {:else}
+        <button class="daily-btn" onclick={playDaily} disabled={dailyLoading}>
+          {#if dailyLoading}
+            Loading...
+          {:else}
+            📅 Daily Heardle
+          {/if}
+        </button>
+
+        <button class="calendar-btn" onclick={toggleCalendar}>
+          📆 Browse Past Dailies
+        </button>
+        
+        {#if dailyError}
+          <p class="error">{dailyError}</p>
         {/if}
-      </button>
-      
-      {#if dailyError}
-        <p class="error">{dailyError}</p>
+
+        <div class="or-divider">
+          <span>OR</span>
+        </div>
+
+        <ArtistSearch on:artistSelected={handleArtistSelect} />
       {/if}
-
-      <div class="or-divider">
-        <span>OR</span>
-      </div>
-
-      <ArtistSearch on:artistSelected={handleArtistSelect} />
     </div>
   {:else}
     <Game artist={selectedArtist} dailyMode={dailyMode} on:newGame={handleNewGame} />
@@ -184,6 +211,43 @@
   .daily-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .calendar-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  .calendar-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .calendar-btn:active {
+    transform: translateY(0);
+  }
+
+  .back-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  .back-btn:hover {
+    color: #fff;
   }
 
   .or-divider {
