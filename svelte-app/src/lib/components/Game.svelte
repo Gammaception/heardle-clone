@@ -5,7 +5,7 @@
   const dispatch = createEventDispatcher();
 
   /** @type {{ id: string, name: string, thumbnail: string | null }} */
-  const { artist } = $props();
+  const { artist, dailyMode = false } = $props();
 
   /** @type {{ videoId: string, title: string, artist: string, album: string | null, thumbnail: string | null, duration: number, year: number | null } | null} */
   let song = $state(null);
@@ -466,7 +466,12 @@
     </div>
   {:else if song}
     <div class="game-header">
-      <h2 class="artist-title">{artist.name}</h2>
+      <h2 class="artist-title">
+        {artist.name}
+        {#if dailyMode}
+          <span class="daily-badge">📅 Daily</span>
+        {/if}
+      </h2>
       <p class="game-instruction">Can you guess the song?</p>
     </div>
 
@@ -652,6 +657,19 @@
     font-size: 1.75rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .daily-badge {
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 
   .game-instruction {

@@ -6,16 +6,43 @@
   let showGame = $state(false);
   let selectedArtist = $state(null);
   let showStats = $state(false);
+  let dailyMode = $state(false);
+  let dailyLoading = $state(false);
+  /** @type {string | null} */
+  let dailyError = $state(null);
 
+  /** @param {any} event */
   function handleArtistSelect(event) {
     selectedArtist = event.detail;
+    dailyMode = false;
     showGame = true;
     showStats = false;
+  }
+
+  async function playDaily() {
+    dailyLoading = true;
+    dailyError = null;
+    try {
+      const response = await fetch('/api/daily');
+      if (!response.ok) {
+        throw new Error('Failed to load daily artist');
+      }
+      const data = await response.json();
+      selectedArtist = data.artist;
+      dailyMode = true;
+      showGame = true;
+      showStats = false;
+    } catch (err) {
+      dailyError = 'Could not load today\'s artist. Try again later.';
+    } finally {
+      dailyLoading = false;
+    }
   }
 
   function handleNewGame() {
     showGame = false;
     selectedArtist = null;
+    dailyMode = false;
   }
 
   function toggleStats() {
@@ -41,10 +68,27 @@
     <div class="landing">
       <h1 class="title">🎵 Ana's Heardle</h1>
       <p class="subtitle">Pick an artist and try to guess their song!</p>
+      
+      <button class="daily-btn" onclick={playDaily} disabled={dailyLoading}>
+        {#if dailyLoading}
+          Loading...
+        {:else}
+          📅 Daily Heardle
+        {/if}
+      </button>
+      
+      {#if dailyError}
+        <p class="error">{dailyError}</p>
+      {/if}
+
+      <div class="or-divider">
+        <span>OR</span>
+      </div>
+
       <ArtistSearch on:artistSelected={handleArtistSelect} />
     </div>
   {:else}
-    <Game artist={selectedArtist} on:newGame={handleNewGame} />
+    <Game artist={selectedArtist} dailyMode={dailyMode} on:newGame={handleNewGame} />
   {/if}
 </div>
 
@@ -112,5 +156,63 @@
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
     margin-bottom: 1rem;
+  }
+
+  .daily-btn {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #f7971e, #ffd200);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3);
+    margin-bottom: 1rem;
+  }
+
+  .daily-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(247, 151, 30, 0.4);
+  }
+
+  .daily-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .daily-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0.5rem 0 1rem;
+  }
+
+  .or-divider::before,
+  .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .or-divider span {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  .error {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
   }
 </style>
