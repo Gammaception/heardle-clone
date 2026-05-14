@@ -46,7 +46,7 @@
   let timerInterval = null;
   let apiReady = false;
   /** @type {HTMLDivElement | null} */
-  let playerElement = null;
+  let playerElement = $state(null);
 
   // Snippet durations in seconds - each guess reveals more
   const snippetDurations = [1, 3, 5, 9, 16, 20];

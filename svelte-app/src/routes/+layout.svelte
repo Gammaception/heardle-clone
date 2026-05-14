@@ -1,8 +1,5 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
-	export const prerender = true;
-	export const trailingSlash = 'always';
-
 	let { children } = $props();
 </script>
 
