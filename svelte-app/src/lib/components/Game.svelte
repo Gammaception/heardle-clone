@@ -44,6 +44,8 @@
   let snippetTimeout = null;
   /** @type {number | null} */
   let timerInterval = null;
+  // Track whether we're waiting for playback to start (to defer snippet timer)
+  let waitingForPlayback = $state(false);
   let apiReady = false;
   /** @type {HTMLDivElement | null} */
   let playerElement = $state(null);
@@ -123,22 +125,38 @@
           } else {
             randomStartTime = 0;
           }
+        },
+        onStateChange: (/** @type {any} */ event) => {
+          // YT.PlayerState.PLAYING = 1
+          // When playback actually starts, trigger the deferred snippet timer
+          if (event.data === 1 && waitingForPlayback) {
+            waitingForPlayback = false;
+            startSnippetTimer();
+          }
         }
       }
     });
   }
 
+  /** @type {number | null} */
+  let snippetTimerId = null;
+
+  function startSnippetTimer() {
+    const duration = snippetDurations[Math.min(currentSnippet, snippetDurations.length - 1)];
+    snippetTimerId = setTimeout(() => {
+      pauseSnippet();
+    }, duration * 1000);
+  }
+
   function playSnippet() {
     if (!player || gameWon || gameLost) return;
 
-    // Use first snippet duration (3s) before any guesses, then progressive durations after each guess
-    const duration = snippetDurations[Math.min(currentSnippet, snippetDurations.length - 1)];
-
-    // Seek to start position (0 or random start time)
+    // Seek to start position first (this may trigger state changes, but we haven't set the flag yet)
     player.seekTo(randomStartTime);
     
-    // Start playing
-    player.playVideo();
+    // NOW set the flag - seekTo() is done, so any subsequent PLAYING state is from playVideo()
+    waitingForPlayback = true;
+    
     isPlaying = true;
     elapsedSeconds = 0;
 
@@ -149,10 +167,8 @@
       }
     }, 1000);
 
-    // Auto-pause after snippet duration
-    snippetTimeout = setTimeout(() => {
-      pauseSnippet();
-    }, duration * 1000);
+    // Start playback - the onStateChange handler will trigger startSnippetTimer() when audio actually begins
+    player.playVideo();
   }
 
   function pauseSnippet() {
@@ -160,7 +176,8 @@
     
     player.pauseVideo();
     isPlaying = false;
-    if (snippetTimeout) clearTimeout(snippetTimeout);
+    waitingForPlayback = false;
+    if (snippetTimerId) clearTimeout(snippetTimerId);
     if (timerInterval) clearInterval(timerInterval);
   }
 
